@@ -214,7 +214,6 @@ func TestModifyString_SameLength(t *testing.T) {
 	}
 
 	original, _ := mf.GetString(0)
-	newValue := "test"
 	if len(original.Value) < 4 {
 		// Find a string that's at least 4 chars
 		for i := 0; i < mf.GetStringCount(); i++ {
@@ -227,7 +226,7 @@ func TestModifyString_SameLength(t *testing.T) {
 	}
 
 	// Modify to same length
-	newValue = ""
+	newValue := "test"
 	for i := 0; i < len(original.Value); i++ {
 		newValue += "x"
 	}
