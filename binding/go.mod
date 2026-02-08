@@ -1,6 +1,6 @@
 module bind
 
-go 1.17.0
+go 1.17
 
 require (
 	github.com/MiddleRed/meta-string-edit v0.0.0
