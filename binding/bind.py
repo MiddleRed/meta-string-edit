@@ -252,7 +252,7 @@ class MetadataFile:
         When *use_regex* is ``True`` the pattern is compiled as a Go
         regular expression; otherwise a case-insensitive substring match
         is performed.
-        """
+        """  # noqa: E501
         self._check()
         ptr = self._lib.MetaSearchStrings(
             self._handle,
