@@ -1,0 +1,161 @@
+name: Go CLI Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build Go CLI
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          # Desktop platforms
+          - goos: linux
+            goarch: amd64
+            name: linux-amd64
+          - goos: linux
+            goarch: arm64
+            name: linux-arm64
+          - goos: darwin
+            goarch: amd64
+            name: macos-amd64
+          - goos: darwin
+            goarch: arm64
+            name: macos-arm64
+          - goos: windows
+            goarch: amd64
+            name: windows-amd64
+            ext: .exe
+          - goos: windows
+            goarch: arm64
+            name: windows-arm64
+            ext: .exe
+          # Mobile platforms
+          - goos: android
+            goarch: arm64
+            name: android-arm64
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 'stable'
+      
+      - name: Get version
+        id: version
+        run: |
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          echo "VERSION=${LATEST_TAG#v}" >> $GITHUB_OUTPUT
+      
+      - name: Build binary
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: 0
+        run: |
+          cd metastringedit
+          OUTPUT_NAME="metastringedit-${{ steps.version.outputs.VERSION }}-${{ matrix.name }}${{ matrix.ext }}"
+          go build -ldflags="-s -w -X metastringedit/cli.version=${{ steps.version.outputs.VERSION }}" -o "../dist/$OUTPUT_NAME" .
+          cd ..
+      
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: binary-${{ matrix.name }}
+          path: dist/*
+          retention-days: 1
+
+  build-ios:
+    name: Build iOS
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: 'stable'
+
+      - name: Get version
+        id: version
+        run: |
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          echo "VERSION=$LATEST_TAG" >> $GITHUB_OUTPUT
+
+      - name: Build iOS Arm64
+        run: |
+          VERSION=${{ steps.version.outputs.VERSION }}
+          export SDK=$(xcrun --sdk iphoneos --show-sdk-path)
+          export CC=$(xcrun --sdk iphoneos --find clang)
+          export CGO_CFLAGS="-isysroot $SDK -arch arm64 -miphoneos-version-min=10.0"
+          export CGO_LDFLAGS="-isysroot $SDK -arch arm64 -miphoneos-version-min=10.0"
+          
+          cd ./metastringedit
+          GOOS=ios GOARCH=arm64 CGO_ENABLED=1 CC=$CC \
+          go build -ldflags="-s -w -X metastringedit/cli.version=$VERSION" \
+          -o "../dist/metastringedit-$VERSION-ios-arm64" .
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: binary-ios-arm64
+          path: dist/*
+  
+  release:
+    name: Create Release
+    needs: [build, build-ios]
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get Target Tag
+        id: target_tag
+        shell: bash
+        run: |
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            TAG_NAME=${{ github.ref_name }}
+          else
+            git fetch --tags
+            TAG_NAME=$(git describe --tags `git rev-list --tags --max-count=1`)
+          fi
+          echo "RELEASE_TAG=$TAG_NAME" >> $GITHUB_OUTPUT
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      
+      - name: Prepare release assets
+        run: |
+          mkdir -p release
+          find artifacts -type f -exec cp {} release/ \;
+          ls ./release
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.target_tag.outputs.RELEASE_TAG }}
+          name: Release ${{ steps.target_tag.outputs.RELEASE_TAG }}
+          files: release/*
+          draft: false
+          prerelease: ${{ contains(steps.target_tag.outputs.RELEASE_TAG, '-') }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
