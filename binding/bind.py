@@ -43,7 +43,7 @@ def _lib_filename() -> str:
 def _cdll_get() -> ctypes.CDLL:
     lib_dir = Path(__file__).parent
     lib_path = lib_dir / _lib_filename()
-    print(lib_path)
+
     if not lib_path.exists():
         raise FileNotFoundError("Library is not found, please reinstall the package.")
 
