@@ -37,14 +37,17 @@ func safePrintable(s string) string {
 
 var (
 	// Flags
-	infoFlag   bool
-	listFlag   string
-	searchFlag string
-	regexFlag  string
-	dumpFlag   bool
-	editFlags  []string
-	outputFlag string
+	infoFlag    bool
+	listFlag    string
+	searchFlag  string
+	regexFlag   string
+	dumpFlag    bool
+	editFlags   []string
+	outputFlag  string
+	versionFlag bool
 )
+
+var version = "//autocomplete"
 
 func CLIMain() {
 	if err := rootCmd.Execute(); err != nil {
@@ -101,9 +104,15 @@ func init() {
 	rootCmd.Flags().BoolVarP(&dumpFlag, "dump", "d", false, "Dump all strings to JSON")
 	rootCmd.Flags().StringArrayVarP(&editFlags, "edit", "e", []string{}, "Edit strings (format: nth=value, can input multiple pairs)")
 	rootCmd.Flags().StringVarP(&outputFlag, "output", "o", "", "Output file path")
+	rootCmd.Flags().BoolVarP(&versionFlag, "version", "v", false, "Show version information")
 }
 
 func runCommand(cmd *cobra.Command, args []string) error {
+	if versionFlag {
+		fmt.Println("metastringedit", version)
+		return nil
+	}
+
 	if len(args) == 0 {
 		cmd.Usage()
 		return nil
