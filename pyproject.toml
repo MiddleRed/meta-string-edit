@@ -1,0 +1,87 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "metastringedit"
+version = "0.1.0"
+description = "Unity global-metadata.dat stringliteral editor with Go backend and Python bindings"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+authors = [
+    {name = "MiddleRed"}
+]
+keywords = ["unity", "il2cpp", "metadata", "reverse-engineering", "game-modding"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Go",
+]
+
+[project.urls]
+Homepage = "https://github.com/MiddleRed/meta-string-edit"
+Repository = "https://github.com/MiddleRed/meta-string-edit"
+Issues = "https://github.com/MiddleRed/meta-string-edit/issues"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.4.2",
+    "pytest-cov>=4.0.0",
+    "ruff>=0.15.0",
+    "hatchling>=1.27.0",
+]
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["./binding"]
+python_files = ["test.py"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py39"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP"]
+ignore = []
+
+[project.scripts]
+metastringedit = "metastringedit.cli:cli_entry"
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "binding/*.py",
+    "*.go",
+    "go.*",
+]
+exclude = [
+    "test_*",
+    "*_test.*",
+    "examples/",
+]
+
+[tool.hatch.build.targets.wheel.hooks.custom]
+
+[tool.hatch.build.targets.wheel]
+pure = false
+
+sources = { "binding" = "metastringedit" }
+include = [
+    "binding/*.py"
+]
+exclude = [
+    "test.py"
+]
+artifacts = [
+    "binding/*.dll",
+    "binding/*.so",
+    "binding/*.dylib",
+]

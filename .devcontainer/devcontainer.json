@@ -1,0 +1,21 @@
+{
+    "name": "Ubuntu",
+    "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+    "features": {
+        "ghcr.io/devcontainers/features/go:1": {
+            "version": "1.24.13"
+        },
+        "ghcr.io/jsburckhardt/devcontainer-features/uv:1": {}
+    },
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "golang.go",
+                "ms-python.python",
+                "ms-python.vscode-pylance",
+                "charliermarsh.ruff"
+            ]
+        }
+    },
+    "postCreateCommand": "uv sync --no-install-project --extra dev"
+}
