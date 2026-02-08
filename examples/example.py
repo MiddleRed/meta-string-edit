@@ -14,7 +14,10 @@ import sys
 # Ensure project root is importable
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from metastringedit import MetadataFile
+try:
+    from binding import MetadataFile
+except ImportError:
+    from metastringedit import MetadataFile
 
 METADATA_FILE_PATH = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
